@@ -1,6 +1,6 @@
 package com.br;
 
-public interface Connection {
+public interface ServerConnection {
     void start(int port);
     void stop();
 }

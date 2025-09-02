@@ -5,7 +5,7 @@ import java.io.IOException;
 public class Main {
     public static void main(String[] args) {
 
-        ConnectionImpl server = new ConnectionImpl();
+        ServerConnectionImpl server = new ServerConnectionImpl();
         ClientConnectionImpl client = new ClientConnectionImpl();
 
         client.startConnection("127.0.0.1", 6969);

@@ -7,7 +7,7 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public class ConnectionImpl implements Connection {
+public class ServerConnectionImpl implements ServerConnection {
     private ServerSocket serverSocket;
     private Socket clientSocket;
     private PrintWriter out;
