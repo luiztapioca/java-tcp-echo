@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.time.Duration;
 
 public class TcpEchoClientImpl implements TcpEchoClient {
 
@@ -18,26 +19,24 @@ public class TcpEchoClientImpl implements TcpEchoClient {
         ) {
 
             System.out.println("Conectado ao host: " + ip + ":" + port);
-            String msg;
+            String line;
 
-            new Thread(() -> {
-                try {
-                    String response;
-                    while ((response = in.readLine()) != null) {
-                        System.out.println("Servidor: " + response);
-                    }
-                } catch (Exception e) {
-                    System.out.println("Fechando conexão.");
-                }
-            }).start();
+            while ((line = stdin.readLine()) != null) {
+                System.out.println(line);
+                var ini = System.nanoTime();
 
-            while ((msg = stdin.readLine()) != null) {
-                out.println(msg);
+                out.println(line);
+                out.flush();
 
-                if(msg.equalsIgnoreCase("quit")) {
+                var resp = in.readLine();
+                var fim = System.nanoTime(); 
+
+                if("quit".equalsIgnoreCase(line)) {
                     System.out.println("Fechando conexão.");
                     break;
                 }
+                System.out.println("Servidor: " + resp);
+                System.out.println("Latência: " + Duration.ofMillis(fim - ini).toMillis() + "ms");
             }
             
         } catch (Exception e) {

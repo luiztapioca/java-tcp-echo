@@ -1,5 +1,8 @@
-# java-tcp-ping-pong
-Projeto de Ping Pong usando TCP em Java
+# java-tcp-echo
+Projeto de Echo server usando TCP em Java
+
+TODO:
+- [ ] Colocar UTF-8
 
 `mvn compile`
 `mvn exec:java -Dexec.mainClass="com.br.Main" -Dexec.args="--server --port=8080"`

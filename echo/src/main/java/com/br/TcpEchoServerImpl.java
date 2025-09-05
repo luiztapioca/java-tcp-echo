@@ -21,13 +21,14 @@ public class TcpEchoServerImpl implements TcpEchoServer {
                     PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
                 ) {
                     System.out.println("Conexão aceita");
-                    String msg;
+                    String line;
 
-                    while((msg = in.readLine()) != null) {
-                        System.out.println("Mensagem recebida: " + msg);
-                        out.println(msg);
+                    while((line = in.readLine()) != null) {
+                        System.out.println("Mensagem recebida: " + line);
+                        out.println(line);
+                        out.flush();
 
-                        if(msg.equalsIgnoreCase("quit")) {
+                        if("quit".equalsIgnoreCase(line)) {
                             System.out.println("Fechando conexão.");
                             break;
                         }
