@@ -3,9 +3,16 @@ package com.br;
 public class Main {
     public static void main(String[] args) {
 
-        ServerConnectionImpl server = new ServerConnectionImpl();
-        ClientConnectionImpl client = new ClientConnectionImpl();
+        var parser = new FlagParser(args);
+        var server = new TcpEchoServerImpl();
+        var client = new TcpEchoClientImpl();
 
-        FlagParser parser = new FlagParser(args);
+        if(parser.has("server")) {
+            server.start(Integer.valueOf(parser.get("port")));
+        }
+
+        if(parser.has("client")) {
+            client.start(parser.get("ip"), Integer.valueOf(parser.get("port")));
+        }
     }
 }
