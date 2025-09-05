@@ -29,6 +29,12 @@ public class TcpEchoClientImpl implements TcpEchoClient {
                 out.flush();
 
                 var resp = in.readLine();
+
+                if(resp == null) {
+                    System.out.println("Servidor encerrou conexão.");
+                    break;
+                }
+
                 var fim = System.nanoTime(); 
 
                 if("quit".equalsIgnoreCase(line)) {
