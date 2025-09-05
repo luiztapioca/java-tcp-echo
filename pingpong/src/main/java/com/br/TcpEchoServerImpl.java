@@ -18,7 +18,7 @@ public class TcpEchoServerImpl implements TcpEchoServer {
                 try (
                     Socket socket = serverSocket.accept();
                     BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                    PrintWriter out = new PrintWriter(socket.getOutputStream());
+                    PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
                 ) {
                     System.out.println("Conexão aceita");
                     String msg;
@@ -27,8 +27,8 @@ public class TcpEchoServerImpl implements TcpEchoServer {
                         System.out.println("Mensagem recebida: " + msg);
                         out.println(msg);
 
-                        if(msg.equals("quit")) {
-                            serverSocket.close();
+                        if(msg.equalsIgnoreCase("quit")) {
+                            System.out.println("Fechando conexão.");
                             break;
                         }
                     }
