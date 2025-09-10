@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.time.Duration;
+import java.nio.charset.StandardCharsets;
 
 public class TcpEchoClientImpl implements TcpEchoClient {
 
@@ -13,40 +14,49 @@ public class TcpEchoClientImpl implements TcpEchoClient {
     public void start(String ip, int port) {
         try (
             var clientSocket = new Socket(ip, port);
-            var in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-            var out = new PrintWriter(clientSocket.getOutputStream(), true);
-            var stdin = new BufferedReader(new InputStreamReader(System.in))
+            var in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream(), StandardCharsets.UTF_8));
+            var out = new PrintWriter(clientSocket.getOutputStream(), true, StandardCharsets.UTF_8);
+            var stdin = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8))
         ) {
 
-            System.out.println("Conectado ao host: " + ip + ":" + port);
+            System.out.println("\nConectado ao host: " + ip + ":" + port);
+
+            System.out.println("Servidor: " + in.readLine());
+            System.out.println("Servidor: " + in.readLine());
+
             String line;
 
             while ((line = stdin.readLine()) != null) {
-                System.out.println(line);
                 var ini = System.nanoTime();
 
-                out.println(line);
+                /*
+                --> Instruções do projeto
+                - Protocolo de comunicação: cada mensagem deve ser finalizada com um '\n'
+                */
+                out.write(line + "\n");
                 out.flush();
 
                 var resp = in.readLine();
-
                 if(resp == null) {
                     System.out.println("Servidor encerrou conexão.");
                     break;
                 }
-
-                var fim = System.nanoTime(); 
+                
+                var fim = System.nanoTime();
 
                 if("quit".equalsIgnoreCase(line)) {
                     System.out.println("Fechando conexão.");
                     break;
                 }
-                System.out.println("Servidor: " + resp);
-                System.out.println("Latência: " + Duration.ofMillis(fim - ini).toMillis() + "ms");
+                System.out.println("\nServidor: " + resp);
+
+                double latenciaMs = (double) (fim - ini) / 1_000_000.0;
+                System.out.printf("Latência: %.3f ms\n\n", latenciaMs);
             }
-            
+        } catch (IOException e) {
+            throw new ConnectionException("Erro ao realizar conexão", e);
         } catch (Exception e) {
-            throw new ConnectionException("Erro ao realizar conexão: ", e);
+            throw new ConnectionException("Erro inesperado ao realizar conexão", e);
         }
     }
 }
