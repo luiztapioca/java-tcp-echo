@@ -6,6 +6,7 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -52,29 +53,39 @@ public class TcpEchoServerImpl implements TcpEchoServer {
     private void processConnections() {
         while (running) {
             try (var socket = connectionQueue.take();
-                var in = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
-                var out = new PrintWriter(socket.getOutputStream(), true, StandardCharsets.UTF_8)) {
-
+                 var in = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
+                 var out = new PrintWriter(socket.getOutputStream(), true, StandardCharsets.UTF_8)) {
+                socket.setSoTimeout(10_000);
                 System.out.println("\nAtendendo cliente: " + socket.getRemoteSocketAddress() + "\n");
                 out.println("O servidor está pronto para processar sua conexão.");
 
                 String line;
-                while ((line = in.readLine()) != null) {
-                    if("quit".equalsIgnoreCase(line)) {
-                        System.out.println("\nConexão finalizada pelo cliente.");
+                while (true) {
+                    try {
+                        line = in.readLine();
+                        if (line == null) {
+                            System.out.println("\nConexão encerrada pelo cliente: " + socket.getRemoteSocketAddress());
+                            break;
+                        }
+                        if("quit".equalsIgnoreCase(line)) {
+                            System.out.println("\nConexão finalizada pelo cliente.");
+                            break;
+                        }
+                        System.out.println("Mensagem recebida: " + line);
+
+                        /*
+                        --> Instruções do projeto
+                        - Protocolo de comunicação: cada mensagem deve ser finalizada com um '\n'
+                        */
+                        out.write(line + "\n");
+                        out.flush();
+                    } catch (SocketTimeoutException ste) {
+                        out.write("Tempo limite de inatividade atingido (10s). Encerrando conexão." + "\n");
+                        out.flush();
+                        System.out.println("Conexão encerrada: cliente inativo -> " + socket.getRemoteSocketAddress());
                         break;
                     }
-                    System.out.println("Mensagem recebida: " + line);
-
-                    /*
-                    --> Instruções do projeto
-                    - Protocolo de comunicação: cada mensagem deve ser finalizada com um '\n'
-                    */
-                    out.write(line + "\n");
-                    out.flush();
                 }
-                System.out.printf("Conexão encerrada: " + socket.getRemoteSocketAddress());
-
             } catch (IOException e) {
                 throw new ConnectionException("Erro ao aceitar nova conexão", e);
             } catch (InterruptedException e) {

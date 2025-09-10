@@ -13,10 +13,10 @@ public class TcpEchoClientImpl implements TcpEchoClient {
     @Override
     public void start(String ip, int port) {
         try (
-            var clientSocket = new Socket(ip, port);
-            var in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream(), StandardCharsets.UTF_8));
-            var out = new PrintWriter(clientSocket.getOutputStream(), true, StandardCharsets.UTF_8);
-            var stdin = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8))
+                var clientSocket = new Socket(ip, port);
+                var in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream(), StandardCharsets.UTF_8));
+                var out = new PrintWriter(clientSocket.getOutputStream(), true, StandardCharsets.UTF_8);
+                var stdin = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8))
         ) {
 
             System.out.println("\nConectado ao host: " + ip + ":" + port);
@@ -37,11 +37,12 @@ public class TcpEchoClientImpl implements TcpEchoClient {
                 out.flush();
 
                 var resp = in.readLine();
-                if(resp == null) {
+                if(resp == null || resp.contains("Tempo limite de inatividade atingido")) {
+                    System.out.println("\nServidor: " + resp);
                     System.out.println("Servidor encerrou conexão.");
                     break;
                 }
-                
+
                 var fim = System.nanoTime();
 
                 if("quit".equalsIgnoreCase(line)) {
