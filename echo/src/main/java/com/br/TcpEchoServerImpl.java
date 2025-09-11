@@ -11,11 +11,27 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+/**
+ * Implementação de um servidor TCP Echo multithreaded.
+ * <p>
+ * Este servidor aceita múltiplas conexões de clientes. Ele usa uma {@link java.util.concurrent.BlockingQueue}
+ * para gerenciar as conexões recebidas e as processa em uma thread separada,
+ * permitindo que o servidor continue aceitando novas conexões rapidamente.
+ * </p>
+ */
 public class TcpEchoServerImpl implements TcpEchoServer {
 
     private final BlockingQueue<Socket> connectionQueue = new LinkedBlockingQueue<>();
     private volatile boolean running = true;
 
+    /**
+     * Inicia o servidor em uma porta especificada.
+     * O servidor aceita novas conexões em um loop e as adiciona à fila de processamento.
+     * Uma thread separada é responsável por processar as conexões da fila.
+     *
+     * @param port A porta na qual o servidor irá escutar.
+     * @throws ConnectionException se ocorrer um erro ao iniciar o servidor ou aceitar uma conexão.
+     */
     @Override
     public void start(int port) {
         try (var serverSocket = new ServerSocket(port)) {
@@ -40,6 +56,12 @@ public class TcpEchoServerImpl implements TcpEchoServer {
         }
     }
 
+    /**
+     * Envia uma mensagem inicial ao cliente informando que a conexão foi enfileirada.
+     *
+     * @param socket O socket do cliente para o qual a mensagem será enviada.
+     * @throws ConnectionException se ocorrer um erro de I/O ao enviar a mensagem.
+     */
     private void sendQueuedMessage(Socket socket) {
         try {
             var out = new PrintWriter(socket.getOutputStream(), true, StandardCharsets.UTF_8);
@@ -50,6 +72,12 @@ public class TcpEchoServerImpl implements TcpEchoServer {
         }
     }
 
+    /**
+     * Método executado em uma thread separada para processar as conexões da fila.
+     * Este método pega uma conexão da fila, atende o cliente e o ecoa as mensagens.
+     * Além disso, trata de tempos de inatividade (com um timeout de 10 segundos),
+     * encerrando a conexão se o cliente não enviar dados dentro desse intervalo.
+     */
     private void processConnections() {
         while (running) {
             try (var socket = connectionQueue.take();
@@ -74,9 +102,9 @@ public class TcpEchoServerImpl implements TcpEchoServer {
                         System.out.println("Mensagem recebida: " + line);
 
                         /*
-                        --> Instruções do projeto
-                        - Protocolo de comunicação: cada mensagem deve ser finalizada com um '\n'
-                        */
+                         * --> Instruções do projeto
+                         * Protocolo de comunicação: cada mensagem deve ser finalizada com um '\n'
+                         */
                         out.write(line + "\n");
                         out.flush();
                     } catch (SocketTimeoutException ste) {
@@ -95,6 +123,9 @@ public class TcpEchoServerImpl implements TcpEchoServer {
         }
     }
 
+    /**
+     * Sinaliza para o servidor que ele deve parar a execução.
+     */
     public void stop() {
         running = false;
         System.out.println("Servidor será finalizado...");

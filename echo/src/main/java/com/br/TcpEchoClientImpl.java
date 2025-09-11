@@ -8,8 +8,23 @@ import java.net.Socket;
 import java.time.Duration;
 import java.nio.charset.StandardCharsets;
 
+/**
+ * Implementação de um cliente TCP Echo.
+ * <p>
+ * Esta classe permite que o usuário se conecte a um servidor, envie mensagens
+ * do console ({@code stdin}) e exiba as mensagens de eco recebidas do servidor.
+ * Ela também mede e exibe a latência de cada requisição.
+ * </p>
+ */
 public class TcpEchoClientImpl implements TcpEchoClient {
 
+    /**
+     * Inicia o cliente, conecta-se ao servidor e gerencia a comunicação de eco.
+     *
+     * @param ip   O endereço IP do servidor para se conectar.
+     * @param port A porta do servidor.
+     * @throws ConnectionException se ocorrer um erro durante a conexão ou comunicação.
+     */
     @Override
     public void start(String ip, int port) {
         try (
@@ -30,9 +45,9 @@ public class TcpEchoClientImpl implements TcpEchoClient {
                 var ini = System.nanoTime();
 
                 /*
-                --> Instruções do projeto
-                - Protocolo de comunicação: cada mensagem deve ser finalizada com um '\n'
-                */
+                 * --> Instruções do projeto
+                 * Protocolo de comunicação: cada mensagem deve ser finalizada com um '\n'
+                 */
                 out.write(line + "\n");
                 out.flush();
 
