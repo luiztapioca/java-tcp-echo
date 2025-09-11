@@ -40,7 +40,6 @@ Abra o terminal e, a partir da pasta raiz do projeto (`echo/`), execute o seguin
 
     mvn clean package
 
-
 ```
 
 Este comando irá compilar todas as classes e empacotar a aplicação em um arquivo `.jar` na pasta `target/`.
@@ -54,14 +53,12 @@ A execução deve ser feita a partir da pasta raiz do seu projeto (`echo/`). Uti
 
   mvn exec:java -Dexec.mainClass="com.br.Main" -Dexec.args="--server --port=<PORTA>"
 
-
 ```
 
 **Modo cliente:**
 ``` bash
 
   mvn exec:java -Dexec.mainClass="com.br.Main" -Dexec.args="--client --ip=<IP> --port=<PORTA>"
-
 
 ```
 
@@ -79,7 +76,6 @@ Inicie o servidor em uma porta de sua escolha (ex: porta 8080):
 
   mvn exec:java -Dexec.mainClass="com.br.Main" -Dexec.args="--server --port=8080"   
 
-
 ```
 
 Saída esperada:
@@ -87,7 +83,6 @@ Saída esperada:
 ``` bash
 
   Servidor conectado na porta: 8080
-
 
 ```
 
@@ -101,7 +96,6 @@ Em uma nova janela do terminal, inicie o cliente. Conecte-se ao servidor na mesm
 
   mvn exec:java -Dexec.mainClass="com.br.Main" -Dexec.args="--client --ip=localhost --port=8080"
 
-
 ```
 
 Saída esperada:
@@ -111,7 +105,6 @@ Saída esperada:
   Conectado ao host: localhost:8080
   Servidor: Sua conexão foi enfileirada. Aguarde para ser atendido.
   Servidor: O servidor está pronto para processar sua conexão.
-
 
 ```
 
@@ -137,7 +130,6 @@ Agora você pode digitar qualquer mensagem no terminal do cliente. A mensagem se
 
   Fechando conexão.
 
-
 ```
 
 No terminal do servidor, você verá o registro das mensagens e das conexões:
@@ -152,7 +144,6 @@ No terminal do servidor, você verá o registro das mensagens e das conexões:
   Mensagem recebida: Hello, world!
   Mensagem recebida: Como vai?
   Conexão finalizada pelo cliente.
-
 
 ```
 
