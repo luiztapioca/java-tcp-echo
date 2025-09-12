@@ -20,8 +20,6 @@ public class FlagRunner {
         }
 
         if(parser.has("client")) {
-
-
             String ip = parseIp();
             int port = parsePort();
             client.start(ip, port);
@@ -30,11 +28,11 @@ public class FlagRunner {
 
     private void validateFlags() {
         if(parser.has("server") && parser.has("client")) {
-            throw new ConnectionException("Cliente e servidor devem ser executados separadamente", new RuntimeException());
+            throw new ConnectionException("Cliente e servidor devem ser executados separadamente: ", new RuntimeException());
         }
 
         if(!parser.has("server") && !parser.has("client")) {
-            throw new ConnectionException("Servidor ou cliente devem ser declarados", new RuntimeException());
+            throw new ConnectionException("Servidor ou cliente devem ser declarados: ", new RuntimeException());
         }
     }
 
