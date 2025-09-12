@@ -233,14 +233,14 @@ mvn compile
 
 ### 2. Executar o servidor:
 ```bash
-java -cp target/classes com.br.Main --server --port=6969
+mvn exec:java -Dexec.mainClass="com.br.Main" -Dexec.args="--server --port=<PORTA>"
 ```
 
 ---
 
 ### 3. Executar o cliente:
 ```bash
-java -cp target/classes com.br.Main --client --ip=localhost --port=6969
+mvn exec:java -Dexec.mainClass="com.br.Main" -Dexec.args="--client --ip=<IP> --port=<PORTA>"
 ```
 
 ---

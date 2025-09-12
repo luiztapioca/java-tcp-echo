@@ -208,12 +208,12 @@ Cliente &lt;──ACK── Servidor
 </section>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="18" data-class="invert" data-paginate="true" data-theme="default" lang="en-US" class="invert" data-marpit-pagination="18" style="--class:invert;--paginate:true;--theme:default;" data-marpit-pagination-total="23">
 <h3 id="2-executar-o-servidor">2. Executar o servidor:</h3>
-<pre is="marp-pre" data-auto-scaling="downscale-only"><code class="language-bash">java -<span class="hljs-built_in">cp</span> target/classes com.br.Main --server --port=6969
+<pre is="marp-pre" data-auto-scaling="downscale-only"><code class="language-bash">mvn <span class="hljs-built_in">exec</span>:java -Dexec.mainClass=<span class="hljs-string">&quot;com.br.Main&quot;</span> -Dexec.args=<span class="hljs-string">&quot;--server --port=&lt;PORTA&gt;&quot;</span>
 </code></pre>
 </section>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="19" data-class="invert" data-paginate="true" data-theme="default" lang="en-US" class="invert" data-marpit-pagination="19" style="--class:invert;--paginate:true;--theme:default;" data-marpit-pagination-total="23">
 <h3 id="3-executar-o-cliente">3. Executar o cliente:</h3>
-<pre is="marp-pre" data-auto-scaling="downscale-only"><code class="language-bash">java -<span class="hljs-built_in">cp</span> target/classes com.br.Main --client --ip=localhost --port=6969
+<pre is="marp-pre" data-auto-scaling="downscale-only"><code class="language-bash">mvn <span class="hljs-built_in">exec</span>:java -Dexec.mainClass=<span class="hljs-string">&quot;com.br.Main&quot;</span> -Dexec.args=<span class="hljs-string">&quot;--client --ip=&lt;IP&gt; --port=&lt;PORTA&gt;&quot;</span>
 </code></pre>
 </section>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="20" data-class="invert" data-paginate="true" data-theme="default" lang="en-US" class="invert" data-marpit-pagination="20" style="--class:invert;--paginate:true;--theme:default;" data-marpit-pagination-total="23">
