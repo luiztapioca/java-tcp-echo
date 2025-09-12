@@ -91,8 +91,8 @@ public class Main {
 ---
 
 **Uso:**
-- `--server --port=6969` → Inicia servidor
-- `--client --ip=localhost --port=6969` → Inicia cliente
+- `--server --port=<PORTA>` → Inicia servidor
+- `--client --ip=localhost --port=<PORTA>` → Inicia cliente
 
 ---
 
