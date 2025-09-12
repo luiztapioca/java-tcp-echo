@@ -15,13 +15,13 @@ public class FlagRunner {
         validateFlags();
 
         if(parser.has("server")) {
-            int port = parsePort();
+            int port = validatePort();
             server.start(port);
         }
 
         if(parser.has("client")) {
-            String ip = parseIp();
-            int port = parsePort();
+            String ip = validateIp();
+            int port = validatePort();
             client.start(ip, port);
         }
     }
@@ -36,7 +36,7 @@ public class FlagRunner {
         }
     }
 
-    private int parsePort() {
+    private int validatePort() {
         int port = Integer.valueOf(parser.get("port"));
         if(1 > port || port > 65536) {
             throw new ConnectionException("A porta deve ser entre 1 e 65.536: ", new RuntimeException());
@@ -44,7 +44,7 @@ public class FlagRunner {
         return port;
     }
 
-    private String parseIp() {
+    private String validateIp() {
         String ip = parser.get("ip");
         if(ip == null || ip.trim().isEmpty()) {
             throw new ConnectionException("O IP deve ser preenchido: ", new RuntimeException());
