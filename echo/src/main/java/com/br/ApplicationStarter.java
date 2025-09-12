@@ -1,11 +1,11 @@
 package com.br;
 
-public class ApplicationContext {
+public class ApplicationStarter {
     private final FlagParser parser;
     private final TcpEchoServer server;
     private final TcpEchoClient client;
 
-    public ApplicationContext(FlagParser parser, TcpEchoClient client, TcpEchoServer server) {
+    public ApplicationStarter(FlagParser parser, TcpEchoClient client, TcpEchoServer server) {
         this.client = client;
         this.server = server;
         this.parser = parser;

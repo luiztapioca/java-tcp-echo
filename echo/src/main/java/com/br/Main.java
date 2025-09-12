@@ -19,7 +19,7 @@ public class Main {
         var server = new TcpEchoServerImpl();
         var client = new TcpEchoClientImpl();
 
-        var ctx = new ApplicationContext(parser, client, server);
-        ctx.execute();
+        var starter = new ApplicationStarter(parser, client, server);
+        starter.execute();
     }
 }
