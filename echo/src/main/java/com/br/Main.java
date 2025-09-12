@@ -19,7 +19,7 @@ public class Main {
         var server = new TcpEchoServerImpl();
         var client = new TcpEchoClientImpl();
 
-        var runner = new FlagRunner(parser, client, server);
-        runner.execute();
+        var ctx = new ApplicationContext(parser, client, server);
+        ctx.execute();
     }
 }
