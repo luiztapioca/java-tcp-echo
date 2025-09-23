@@ -37,7 +37,6 @@ public class TcpEchoClientImpl implements TcpEchoClient {
             System.out.println("\nConectado ao host: " + ip + ":" + port);
 
             System.out.println("Servidor: " + in.readLine());
-            System.out.println("Servidor: " + in.readLine());
 
             String line;
 

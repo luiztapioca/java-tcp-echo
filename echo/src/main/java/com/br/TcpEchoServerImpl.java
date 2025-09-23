@@ -8,27 +8,32 @@ import java.net.Socket;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Implementação de um servidor TCP Echo multithreaded.
  * <p>
- * Este servidor aceita múltiplas conexões de clientes. Ele usa uma {@link java.util.concurrent.BlockingQueue}
- * para gerenciar as conexões recebidas e as processa em uma thread separada,
- * permitindo que o servidor continue aceitando novas conexões rapidamente.
+ * Este servidor aceita múltiplas conexões de clientes e as processa em paralelo
+ * usando um pool de threads.
  * </p>
  */
 public class TcpEchoServerImpl implements TcpEchoServer {
 
-    private final BlockingQueue<Socket> connectionQueue = new LinkedBlockingQueue<>();
     private volatile boolean running = true;
+    private final ExecutorService threadPool;
+
+    /**
+     * Construtor que inicializa o pool de threads.
+     * É usado um cached thread pool, que cresce conforme necessário e reaproveita threads.
+     */
+    public TcpEchoServerImpl() {
+        this.threadPool = Executors.newCachedThreadPool();
+    }
 
     /**
      * Inicia o servidor em uma porta especificada.
-     * O servidor aceita novas conexões em um loop e as adiciona à fila de processamento.
-     * Uma thread separada é responsável por processar as conexões da fila.
-     *
+     * 
      * @param port A porta na qual o servidor irá escutar.
      * @throws ConnectionException se ocorrer um erro ao iniciar o servidor ou aceitar uma conexão.
      */
@@ -37,97 +42,74 @@ public class TcpEchoServerImpl implements TcpEchoServer {
         try (var serverSocket = new ServerSocket(port)) {
             System.out.println("\nServidor conectado na porta: " + port);
 
-            new Thread(this::processConnections, "ConnectionProcessor").start();
-
             while (running) {
                 var socket = serverSocket.accept();
-                connectionQueue.put(socket);
 
                 System.out.println("\nNova conexão aceita: " + socket.getRemoteSocketAddress());
 
-                sendQueuedMessage(socket);
+                threadPool.submit(() -> handleClient(socket));
             }
         } catch (IOException e) {
             throw new ConnectionException("Erro ao aceitar nova conexão", e);
 
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            System.err.println("Servidor interrompido.");
         }
     }
 
     /**
-     * Envia uma mensagem inicial ao cliente informando que a conexão foi enfileirada.
-     *
-     * @param socket O socket do cliente para o qual a mensagem será enviada.
-     * @throws ConnectionException se ocorrer um erro de I/O ao enviar a mensagem.
+     * Lógica de atendimento de cada cliente.
+     * Execução assíncrona.
      */
-    private void sendQueuedMessage(Socket socket) {
-        try {
-            var out = new PrintWriter(socket.getOutputStream(), true, StandardCharsets.UTF_8);
-            out.println("Sua conexão foi enfileirada. Aguarde para ser atendido.");
+    private void handleClient(Socket socket) {
+        try (socket;
+             var in = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
+             var out = new PrintWriter(socket.getOutputStream(), true, StandardCharsets.UTF_8)) {
+
+            socket.setSoTimeout(10_000);
+            System.out.println("Atendendo cliente: " + socket.getRemoteSocketAddress());
+
+            out.println("O servidor está pronto para processar sua conexão.");
+
+            String line;
+            while ((line = readLineWithTimeout(in, out, socket)) != null) {
+                if ("quit".equalsIgnoreCase(line)) {
+                    System.out.println("Conexão finalizada pelo cliente: "  + socket.getRemoteSocketAddress());
+                    break;
+                }
+                System.out.println("Mensagem recebida: " + line);
+
+                /*
+                * --> Instruções do projeto
+                * Protocolo de comunicação: cada mensagem deve ser finalizada com um '\n'
+                */
+                out.write(line + "\n");
+                out.flush();
+            }
 
         } catch (IOException e) {
-            throw new ConnectionException("Erro ao enviar mensagem inicial: ", e);
+            System.err.println("Erro ao processar cliente " + socket.getRemoteSocketAddress() + ": " + e.getMessage());
         }
     }
 
     /**
-     * Método executado em uma thread separada para processar as conexões da fila.
-     * Este método pega uma conexão da fila, atende o cliente e o ecoa as mensagens.
-     * Além disso, trata de tempos de inatividade (com um timeout de 10 segundos),
-     * encerrando a conexão se o cliente não enviar dados dentro desse intervalo.
+     * Lê uma linha tratando timeout do cliente.
      */
-    private void processConnections() {
-        while (running) {
-            try (var socket = connectionQueue.take();
-                 var in = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
-                 var out = new PrintWriter(socket.getOutputStream(), true, StandardCharsets.UTF_8)) {
-                socket.setSoTimeout(10_000);
-                System.out.println("\nAtendendo cliente: " + socket.getRemoteSocketAddress() + "\n");
-                out.println("O servidor está pronto para processar sua conexão.");
+    private String readLineWithTimeout(BufferedReader in, PrintWriter out, Socket socket) throws IOException {
+        try {
+            return in.readLine();
+        } catch (SocketTimeoutException ste) {
+            out.println("Tempo limite de inatividade atingido (10s). Encerrando conexão.");
+            System.out.println("Conexão encerrada: cliente inativo -> " + socket.getRemoteSocketAddress());
 
-                String line;
-                while (true) {
-                    try {
-                        line = in.readLine();
-                        if (line == null) {
-                            System.out.println("\nConexão encerrada pelo cliente: " + socket.getRemoteSocketAddress());
-                            break;
-                        }
-                        if("quit".equalsIgnoreCase(line)) {
-                            System.out.println("\nConexão finalizada pelo cliente.");
-                            break;
-                        }
-                        System.out.println("Mensagem recebida: " + line);
-
-                        /*
-                         * --> Instruções do projeto
-                         * Protocolo de comunicação: cada mensagem deve ser finalizada com um '\n'
-                         */
-                        out.write(line + "\n");
-                        out.flush();
-                    } catch (SocketTimeoutException ste) {
-                        out.write("Tempo limite de inatividade atingido (10s). Encerrando conexão." + "\n");
-                        out.flush();
-                        System.out.println("Conexão encerrada: cliente inativo -> " + socket.getRemoteSocketAddress());
-                        break;
-                    }
-                }
-            } catch (IOException e) {
-                throw new ConnectionException("Erro ao aceitar nova conexão", e);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new ConnectionException("Processamento interrompido", e);
-            }
+            return null;
         }
     }
 
     /**
-     * Sinaliza para o servidor que ele deve parar a execução.
+     * Sinaliza para o servidor que ele deve parar a execução e encerra o pool de threads.
      */
     public void stop() {
         running = false;
+        threadPool.shutdownNow();
         System.out.println("Servidor será finalizado...");
     }
 }
