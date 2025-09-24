@@ -22,6 +22,7 @@ public class TcpEchoServerImpl implements TcpEchoServer {
 
     private volatile boolean running = true;
     private final ExecutorService threadPool;
+    private ServerSocket serverSocket;
 
     /**
      * Construtor que inicializa o pool de threads.
@@ -35,11 +36,12 @@ public class TcpEchoServerImpl implements TcpEchoServer {
      * Inicia o servidor em uma porta especificada.
      * 
      * @param port A porta na qual o servidor irá escutar.
-     * @throws ConnectionException se ocorrer um erro ao iniciar o servidor ou aceitar uma conexão.
+     * @throws ConnectionException se ocorrer um erro ao iniciar o servidor.
      */
     @Override
     public void start(int port) {
-        try (var serverSocket = new ServerSocket(port)) {
+        try (ServerSocket ss = new ServerSocket(port)) {
+            this.serverSocket = ss;
             System.out.println("\nServidor conectado na porta: " + port);
 
             while (running) {
@@ -50,14 +52,15 @@ public class TcpEchoServerImpl implements TcpEchoServer {
                 threadPool.submit(() -> handleClient(socket));
             }
         } catch (IOException e) {
-            throw new ConnectionException("Erro ao aceitar nova conexão", e);
-
+            if(running){
+                throw new ConnectionException("Erro ao aceitar nova conexão", e);
+            }
         }
     }
 
     /**
      * Lógica de atendimento de cada cliente.
-     * Execução assíncrona.
+     * Execução assíncrona em uma thread do pool.
      */
     private void handleClient(Socket socket) {
         try (socket;
@@ -72,10 +75,10 @@ public class TcpEchoServerImpl implements TcpEchoServer {
             String line;
             while ((line = readLineWithTimeout(in, out, socket)) != null) {
                 if ("quit".equalsIgnoreCase(line)) {
-                    System.out.println("Conexão finalizada pelo cliente: "  + socket.getRemoteSocketAddress());
+                    System.out.println("Conexão finalizada pelo cliente: " + socket.getRemoteSocketAddress());
                     break;
                 }
-                System.out.println("Mensagem recebida: " + line);
+                System.out.println("Mensagem recebida de " + socket.getRemoteSocketAddress() + ": " + line);
 
                 /*
                 * --> Instruções do projeto
@@ -110,6 +113,13 @@ public class TcpEchoServerImpl implements TcpEchoServer {
     public void stop() {
         running = false;
         threadPool.shutdownNow();
+        try {
+            if (serverSocket != null && !serverSocket.isClosed()) {
+                serverSocket.close();
+            }
+        } catch (IOException e) {
+            System.err.println("Erro ao fechar ServerSocket: " + e.getMessage());
+        }
         System.out.println("Servidor será finalizado...");
     }
 }
