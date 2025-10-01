@@ -13,6 +13,7 @@ public interface TcpEchoClient {
      *
      * @param ip   O endereço IP do servidor.
      * @param port A porta do servidor.
+     * @param user O nome de usuário.
      */
-    void start(String ip, int port);
+    void start(String ip, int port, String user);
 }

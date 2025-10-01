@@ -10,12 +10,14 @@ import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.Set;
 
 /**
  * Implementação de um servidor TCP Echo multithreaded.
  * <p>
  * Este servidor aceita múltiplas conexões de clientes e as processa em paralelo
- * usando um pool de threads.
+ * usando um {@code ExecutorService} (pool de threads).
  * </p>
  */
 public class TcpEchoServerImpl implements TcpEchoServer {
@@ -23,10 +25,11 @@ public class TcpEchoServerImpl implements TcpEchoServer {
     private volatile boolean running = true;
     private final ExecutorService threadPool;
     private ServerSocket serverSocket;
+    private final Set<String> activeUsers = ConcurrentHashMap.newKeySet();
 
     /**
      * Construtor que inicializa o pool de threads.
-     * É usado um cached thread pool, que cresce conforme necessário e reaproveita threads.
+     * É usado um cached thread pool ({@code Executors.newCachedThreadPool()}), que cresce conforme necessário e reaproveita threads.
      */
     public TcpEchoServerImpl() {
         this.threadPool = Executors.newCachedThreadPool();
@@ -46,9 +49,6 @@ public class TcpEchoServerImpl implements TcpEchoServer {
 
             while (running) {
                 var socket = serverSocket.accept();
-
-                System.out.println("\nNova conexão aceita: " + socket.getRemoteSocketAddress());
-
                 threadPool.submit(() -> handleClient(socket));
             }
         } catch (IOException e) {
@@ -60,25 +60,41 @@ public class TcpEchoServerImpl implements TcpEchoServer {
 
     /**
      * Lógica de atendimento de cada cliente.
-     * Execução assíncrona em uma thread do pool.
+     * Execução assíncrona em uma thread do pool. O método trata a autenticação
+     * do usuário (verificando se o nome de usuário está preenchido e se já 
+     * está em uso) e, em seguida, entra no loop de echo.
+     * 
+     * @param socket O socket de comunicação específico para este cliente.
      */
     private void handleClient(Socket socket) {
         try (socket;
-             var in = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
-             var out = new PrintWriter(socket.getOutputStream(), true, StandardCharsets.UTF_8)) {
+            var in = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
+            var out = new PrintWriter(socket.getOutputStream(), true, StandardCharsets.UTF_8)) {
 
             socket.setSoTimeout(10_000);
-            System.out.println("Atendendo cliente: " + socket.getRemoteSocketAddress());
 
-            out.println("O servidor está pronto para processar sua conexão.");
+            String username = in.readLine();
+            if(username == null || username.trim().isEmpty()){
+                out.println("USERNAME_INVALID");
+                return;
+            }
+            
+            if(!activeUsers.add(username)){
+                out.println("USER_ALREADY_EXISTS");
+                return;
+            }
+
+            System.out.println("\nAtendendo cliente: " + username + " -> " + socket.getRemoteSocketAddress() + "\n");
+
+            out.println("Olá, " + username + "! O servidor está pronto para processar sua conexão.");
 
             String line;
             while ((line = readLineWithTimeout(in, out, socket)) != null) {
                 if ("quit".equalsIgnoreCase(line)) {
-                    System.out.println("Conexão finalizada pelo cliente: " + socket.getRemoteSocketAddress());
+                    System.out.println("\nConexão finalizada pelo cliente: " + username + " -> " + socket.getRemoteSocketAddress());
                     break;
                 }
-                System.out.println("Mensagem recebida de " + socket.getRemoteSocketAddress() + ": " + line);
+                System.out.println("Mensagem recebida de " + username + ": " + line);
 
                 /*
                 * --> Instruções do projeto
@@ -88,20 +104,28 @@ public class TcpEchoServerImpl implements TcpEchoServer {
                 out.flush();
             }
 
+            activeUsers.remove(username);
+
         } catch (IOException e) {
             System.err.println("Erro ao processar cliente " + socket.getRemoteSocketAddress() + ": " + e.getMessage());
         }
     }
 
     /**
-     * Lê uma linha tratando timeout do cliente.
+     * Lê uma linha de um {@code BufferedReader}, tratando timeout do cliente.
+     * 
+     * @param in O {@code BufferedReader} para leitura da entrada do cliente.
+     * @param out O {@code PrintWriter} para envio de mensagens de erro ao cliente.
+     * @param socket O {@code Socket} do cliente, usado para referenciar o endereço.
+     * @return A linha lida ou {@code null} se ocorrer um {@code SocketTimeoutException}.
+     * @throws IOException Se ocorrer qualquer outro erro de I/O durante a leitura.
      */
     private String readLineWithTimeout(BufferedReader in, PrintWriter out, Socket socket) throws IOException {
         try {
             return in.readLine();
         } catch (SocketTimeoutException ste) {
             out.println("Tempo limite de inatividade atingido (10s). Encerrando conexão.");
-            System.out.println("Conexão encerrada: cliente inativo -> " + socket.getRemoteSocketAddress());
+            System.out.println("\nConexão encerrada: cliente inativo -> " + socket.getRemoteSocketAddress());
 
             return null;
         }

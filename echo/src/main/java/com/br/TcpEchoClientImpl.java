@@ -19,24 +19,38 @@ import java.nio.charset.StandardCharsets;
 public class TcpEchoClientImpl implements TcpEchoClient {
 
     /**
-     * Inicia o cliente, conecta-se ao servidor e gerencia a comunicação de eco.
+     * Inicia o cliente, conecta-o ao servidor e gerencia a comunicação de eco.
      *
      * @param ip   O endereço IP do servidor para se conectar.
      * @param port A porta do servidor.
+     * @param user O nome de usuário a ser enviado ao servidor para identificação.
      * @throws ConnectionException se ocorrer um erro durante a conexão ou comunicação.
      */
     @Override
-    public void start(String ip, int port) {
+    public void start(String ip, int port, String user) {
         try (
-                var clientSocket = new Socket(ip, port);
-                var in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream(), StandardCharsets.UTF_8));
-                var out = new PrintWriter(clientSocket.getOutputStream(), true, StandardCharsets.UTF_8);
-                var stdin = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8))
+            var clientSocket = new Socket(ip, port);
+            var in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream(), StandardCharsets.UTF_8));
+            var out = new PrintWriter(clientSocket.getOutputStream(), true, StandardCharsets.UTF_8);
+            var stdin = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8))
         ) {
 
+
+            out.println(user);
+
+            String serverResp = in.readLine();
+            if("USER_ALREADY_EXISTS".equals(serverResp)){
+                System.out.println("Servidor recusou conexão: nome de usuário já está em uso.");
+                return;
+            }
+            if("USERNAME_INVALID".equals(serverResp)){
+                System.out.println("Servidor recusou conexão: nome de usuário inválido.");
+                return;
+            }
+            
             System.out.println("\nConectado ao host: " + ip + ":" + port);
 
-            System.out.println("Servidor: " + in.readLine());
+            System.out.println("Servidor: " + serverResp);
 
             String line;
 

@@ -4,7 +4,7 @@ package com.br;
  * Orquestra o início da aplicação, validando os argumentos
  * da linha de comando e iniciando o modo de execução correto (cliente ou servidor).
  * <p>
- * Esta classe centraliza a lógica de validação de flags, IP e porta,
+ * Esta classe centraliza a lógica de validação de flags, IP, porta e nome de usuário,
  * garantindo que a aplicação seja executada de forma segura e com os
  * parâmetros esperados.
  * </p>
@@ -48,7 +48,8 @@ public class ApplicationStarter {
         if(parser.has("client")) {
             String ip = validateIp();
             int port = validatePort();
-            client.start(ip, port);
+            String user = validateUser();
+            client.start(ip, port, user);
         }
     }
 
@@ -98,5 +99,19 @@ public class ApplicationStarter {
             throw new ConnectionException("O IP deve ser preenchido: ", new RuntimeException());
         }
         return ip;
+    }
+
+    /**
+     * Valida o nome de usuário fornecido.
+     *
+     * @return O nome de usuário validado.
+     * @throws ConnectionException se o nome de usuário for nulo ou estiver vazio.
+     */
+    private String validateUser() {
+        String user = parser.get("user");
+        if(user == null || user.trim().isEmpty()){
+            throw new ConnectionException("O nome de usuário deve ser preenchido.", new RuntimeException());
+        }
+        return user.trim();
     }
 }
