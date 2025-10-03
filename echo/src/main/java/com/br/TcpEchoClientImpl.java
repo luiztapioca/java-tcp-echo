@@ -80,20 +80,12 @@ public class TcpEchoClientImpl implements TcpEchoClient {
                  */
                 out.println(line);
 
-//                var resp = in.readLine();
-//                if(resp == null || resp.contains("Tempo limite de inatividade atingido")) {
-//                    System.out.println("\nServidor: " + resp);
-//                    System.out.println("Servidor encerrou conexão.");
-//                    break;
-//                }
-
                 var fim = System.nanoTime();
 
                 if("quit".equalsIgnoreCase(line)) {
                     System.out.println("Fechando conexão.");
                     break;
                 }
-//                System.out.println("\nServidor: " + resp);
 
                 double latenciaMs = (double) (fim - ini) / 1_000_000.0;
                 System.out.printf("Latência: %.3f ms\n\n", latenciaMs);
