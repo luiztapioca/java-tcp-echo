@@ -1,13 +1,12 @@
 package com.br;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
+import java.util.Hashtable;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,7 +24,7 @@ public class TcpEchoServerImpl implements TcpEchoServer {
     private volatile boolean running = true;
     private final ExecutorService threadPool;
     private ServerSocket serverSocket;
-    private final Set<String> activeUsers = ConcurrentHashMap.newKeySet();
+    private final Map<String, Socket> activeUsers = new ConcurrentHashMap<>();
 
     /**
      * Construtor que inicializa o pool de threads.
@@ -37,7 +36,7 @@ public class TcpEchoServerImpl implements TcpEchoServer {
 
     /**
      * Inicia o servidor em uma porta especificada.
-     * 
+     *
      * @param port A porta na qual o servidor irá escutar.
      * @throws ConnectionException se ocorrer um erro ao iniciar o servidor.
      */
@@ -61,9 +60,9 @@ public class TcpEchoServerImpl implements TcpEchoServer {
     /**
      * Lógica de atendimento de cada cliente.
      * Execução assíncrona em uma thread do pool. O método trata a autenticação
-     * do usuário (verificando se o nome de usuário está preenchido e se já 
+     * do usuário (verificando se o nome de usuário está preenchido e se já
      * está em uso) e, em seguida, entra no loop de echo.
-     * 
+     *
      * @param socket O socket de comunicação específico para este cliente.
      */
     private void handleClient(Socket socket) {
@@ -71,19 +70,20 @@ public class TcpEchoServerImpl implements TcpEchoServer {
             var in = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
             var out = new PrintWriter(socket.getOutputStream(), true, StandardCharsets.UTF_8)) {
 
-            socket.setSoTimeout(10_000);
+            socket.setSoTimeout(120_000);
 
             String username = in.readLine();
             if(username == null || username.trim().isEmpty()){
                 out.println("USERNAME_INVALID");
                 return;
             }
-            
-            if(!activeUsers.add(username)){
+
+            if(activeUsers.containsKey(username)){
                 out.println("USER_ALREADY_EXISTS");
                 return;
             }
 
+            activeUsers.put(username, socket);
             System.out.println("\nAtendendo cliente: " + username + " -> " + socket.getRemoteSocketAddress() + "\n");
 
             out.println("Olá, " + username + "! O servidor está pronto para processar sua conexão.");
@@ -100,12 +100,21 @@ public class TcpEchoServerImpl implements TcpEchoServer {
                 * --> Instruções do projeto
                 * Protocolo de comunicação: cada mensagem deve ser finalizada com um '\n'
                 */
-                out.write(line + "\n");
-                out.flush();
+
+                String finalLine = line;
+                activeUsers.forEach((u, s) -> {
+                    try {
+                        if (!u.equals(username)) {
+                            var tout = new PrintWriter(s.getOutputStream(), true, StandardCharsets.UTF_8);
+                            tout.println(finalLine);
+                        }
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
             }
 
-            activeUsers.remove(username);
-
+            activeUsers.remove(username, socket);
         } catch (IOException e) {
             System.err.println("Erro ao processar cliente " + socket.getRemoteSocketAddress() + ": " + e.getMessage());
         }
@@ -113,7 +122,7 @@ public class TcpEchoServerImpl implements TcpEchoServer {
 
     /**
      * Lê uma linha de um {@code BufferedReader}, tratando timeout do cliente.
-     * 
+     *
      * @param in O {@code BufferedReader} para leitura da entrada do cliente.
      * @param out O {@code PrintWriter} para envio de mensagens de erro ao cliente.
      * @param socket O {@code Socket} do cliente, usado para referenciar o endereço.

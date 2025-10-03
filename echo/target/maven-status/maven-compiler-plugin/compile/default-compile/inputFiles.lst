@@ -1,6 +1,6 @@
+/Users/lol/git/java-tcp-echo/echo/src/main/java/com/br/ApplicationStarter.java
 /Users/lol/git/java-tcp-echo/echo/src/main/java/com/br/ConnectionException.java
 /Users/lol/git/java-tcp-echo/echo/src/main/java/com/br/FlagParser.java
-/Users/lol/git/java-tcp-echo/echo/src/main/java/com/br/FlagRunner.java
 /Users/lol/git/java-tcp-echo/echo/src/main/java/com/br/Main.java
 /Users/lol/git/java-tcp-echo/echo/src/main/java/com/br/TcpEchoClient.java
 /Users/lol/git/java-tcp-echo/echo/src/main/java/com/br/TcpEchoClientImpl.java

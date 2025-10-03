@@ -47,10 +47,27 @@ public class TcpEchoClientImpl implements TcpEchoClient {
                 System.out.println("Servidor recusou conexão: nome de usuário inválido.");
                 return;
             }
-            
+
             System.out.println("\nConectado ao host: " + ip + ":" + port);
 
             System.out.println("Servidor: " + serverResp);
+            System.out.print(user + " > ");
+
+            var thread = new Thread(() -> {
+                try {
+                    String msg;
+                    while ((msg = in.readLine()) != null) {
+                        System.out.println(msg);
+                        System.out.print(" > ");
+                    }
+
+                } catch (IOException e) {
+                    System.out.println("Erro ao conectar: " + e.getMessage());
+                }
+            });
+
+            thread.setDaemon(true);
+            thread.start();
 
             String line;
 
@@ -61,15 +78,14 @@ public class TcpEchoClientImpl implements TcpEchoClient {
                  * --> Instruções do projeto
                  * Protocolo de comunicação: cada mensagem deve ser finalizada com um '\n'
                  */
-                out.write(line + "\n");
-                out.flush();
+                out.println(line);
 
-                var resp = in.readLine();
-                if(resp == null || resp.contains("Tempo limite de inatividade atingido")) {
-                    System.out.println("\nServidor: " + resp);
-                    System.out.println("Servidor encerrou conexão.");
-                    break;
-                }
+//                var resp = in.readLine();
+//                if(resp == null || resp.contains("Tempo limite de inatividade atingido")) {
+//                    System.out.println("\nServidor: " + resp);
+//                    System.out.println("Servidor encerrou conexão.");
+//                    break;
+//                }
 
                 var fim = System.nanoTime();
 
@@ -77,10 +93,12 @@ public class TcpEchoClientImpl implements TcpEchoClient {
                     System.out.println("Fechando conexão.");
                     break;
                 }
-                System.out.println("\nServidor: " + resp);
+//                System.out.println("\nServidor: " + resp);
 
                 double latenciaMs = (double) (fim - ini) / 1_000_000.0;
                 System.out.printf("Latência: %.3f ms\n\n", latenciaMs);
+
+                System.out.print(user + " > ");
             }
         } catch (IOException e) {
             throw new ConnectionException("Erro ao realizar conexão", e);
